@@ -1,2 +1,3 @@
-TODO:
-Change how it works, simply download list from aur, get all packages in sync repos dir, merge to list, check performance
+Python script to compile a list of tab completions for the AUR and Pacman packages.
+
+List is saved as a gzipped dotfile in the user's home directory.
