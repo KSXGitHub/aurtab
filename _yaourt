@@ -1,4 +1,5 @@
 #compdef yaourt yaourt.static=yaourt
+# This file is a modified version of the one provided by zsh-completion-git
 
 # Completion file for yaourt, based on pacman's
 
