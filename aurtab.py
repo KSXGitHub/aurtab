@@ -18,6 +18,8 @@ def main():
         mylist.append(gz[i])
     tar_mylist = []
     for direc in os.listdir('/var/lib/pacman/sync'):
+        if ".db.sig" in direc:
+            continue
         tar = tarfile.open('/var/lib/pacman/sync/'+direc)
         t = tar.getmembers()
         tar_mylist.append(t)
@@ -34,5 +36,6 @@ def main():
     with gzip.open(os.path.expanduser('~')+'/.pkglist.gz', 'wb') as gout:
         my_file = open(os.path.expanduser('~')+'/.pkglist', 'rb')
         gout.writelines(my_file)
+    print("Completed successfully. {0} packages found.".format(len(mylist)))
 if __name__ == "__main__":
     main()
