@@ -1,4 +1,0 @@
-#compdef yaourt
-
-_arguments "1: :(-S)"\
-    "2:Packages:(`tar tf /home/jack/.packages.tar.gz | grep $words[CURRENT] | sed -r 's/(\.packages\/[a-z0-9]\/)//g'`)"
