@@ -134,7 +134,7 @@ _yaourt_completions_all_groups() {
 _yaourt_completions_all_packages() {
     local -a cmd outputlist
     _yaourt_get_command
-    outputlist=( $(command gzip -cd $HOME/.pkglist.gz) )
+    outputlist=( $(command gzip -cd $HOME/.cache/aurtab/pkglist.gz) )
     typeset -U outputlist
     compadd "$@" -a outputlist
 }

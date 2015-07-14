@@ -26,12 +26,15 @@ def main():
     for item in output:
         mylist.append(item.split("/")[1].split(" ")[0])
     mylist = sorted(set(mylist))
-    with open(os.path.expanduser('~')+'/.pkglist', 'w+') as my_file:
+    if not os.path.exists(os.path.expanduser('~')+'/.cache/aurtab'):
+        os.mkdirs(os.path.expanduser('~')+'/.cache/aurtab')
+    with open(os.path.expanduser('~')+'/.cache/aurtab/pkglist', 'w+') as my_file:
         for item in mylist:
             my_file.write(item+"\n")
-    with gzip.open(os.path.expanduser('~')+'/.pkglist.gz', 'wb') as gout:
-        my_file = open(os.path.expanduser('~')+'/.pkglist', 'rb')
+    with gzip.open(os.path.expanduser('~')+'/.cache/aurtab/pkglist.gz', 'wb') as gout:
+        my_file = open(os.path.expanduser('~')+'/.cache/aurtab/pkglist', 'rb')
         gout.writelines(my_file)
+    os.remove(os.path.expanduser('~')+'/.cache/aurtab/pkglist')
     print("Completed successfully. {0} packages found; {1} AUR and {2} packages in official repositories. {3} duplicates.".format(len(mylist),length,len(output),(len(output)+length) - len(mylist)))
 
 if __name__ == "__main__":
