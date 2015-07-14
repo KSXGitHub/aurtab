@@ -27,7 +27,7 @@ def main():
         mylist.append(item.split("/")[1].split(" ")[0])
     mylist = sorted(set(mylist))
     if not os.path.exists(os.path.expanduser('~')+'/.cache/aurtab'):
-        os.mkdirs(os.path.expanduser('~')+'/.cache/aurtab')
+        os.makedirs(os.path.expanduser('~')+'/.cache/aurtab')
     with open(os.path.expanduser('~')+'/.cache/aurtab/pkglist', 'w+') as my_file:
         for item in mylist:
             my_file.write(item+"\n")
