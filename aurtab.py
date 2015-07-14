@@ -7,8 +7,8 @@ import sys
 import subprocess
 
 def main():
-    if not os.path.exists('/var/lib/pacman/sync'):
-        raise FileNotFoundError('Do you use Arch? Try running pacman -Syu.')
+    if not os.path.exists('/usr/bin/pacman'):
+        raise FileNotFoundError('Do you use Arch? Missing required pacman binary!')
     url = 'https://aur.archlinux.org/packages.gz'
     r = requests.get(url, stream=True)
     if r.status_code != 200:
@@ -21,7 +21,7 @@ def main():
     length = len(mylist)
     print("Found {0} AUR packages.".format(len(mylist)))
     sh_mylist = []
-    output = subprocess.getoutput("pacman -Ss | grep '^[a-z]'")
+    output = subprocess.getoutput("command pacman -Ss | grep '^[a-z]'")
     output = output.split("\n")
     for item in output:
         mylist.append(item.split("/")[1].split(" ")[0])
