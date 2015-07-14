@@ -4,6 +4,7 @@ import requests
 import tarfile
 import gzip
 import sys
+import subprocess
 
 def main():
     if not os.path.exists('/var/lib/pacman/sync'):
@@ -17,19 +18,13 @@ def main():
     mylist = []
     for i in range(1, len(gz)-1):
         mylist.append(gz[i])
-    tar_mylist = []
-    for direc in os.listdir('/var/lib/pacman/sync'):
-        if ".db.sig" in direc:
-            continue
-        tar = tarfile.open('/var/lib/pacman/sync/'+direc)
-        t = tar.getmembers()
-        tar_mylist.append(t)
-    for i in range(0, len(tar_mylist)-1):
-        for thing in tar_mylist[i]:
-            if "/" in thing.name:
-                mylist.append(thing.name.split("/")[0])
-            else:
-                mylist.append(thing.name)
+    length = len(mylist)
+    print("Found {0} AUR packages.".format(len(mylist)))
+    sh_mylist = []
+    output = subprocess.getoutput("pacman -Ss | grep '^[a-z]'")
+    output = output.split("\n")
+    for item in output:
+        mylist.append(item.split("/")[1].split(" ")[0])
     mylist = sorted(set(mylist))
     with open(os.path.expanduser('~')+'/.pkglist', 'w+') as my_file:
         for item in mylist:
@@ -37,6 +32,7 @@ def main():
     with gzip.open(os.path.expanduser('~')+'/.pkglist.gz', 'wb') as gout:
         my_file = open(os.path.expanduser('~')+'/.pkglist', 'rb')
         gout.writelines(my_file)
-    print("Completed successfully. {0} packages found.".format(len(mylist)))
+    print("Completed successfully. {0} packages found; {1} AUR and {2} packages in official repositories. {3} duplicates.".format(len(mylist),length,len(output),(len(output)+length) - len(mylist)))
+
 if __name__ == "__main__":
     main()
