@@ -1,3 +1,3 @@
-Python script to compile a list of tab completions for the AUR and Pacman packages.
+Python script to compile a list of tab completions for the AUR and Pacman packages for yaourt.
 
-List is saved as a gzipped dotfile in the user's home directory.
+List is saved as a gzipped dotfile in the ~/.cache/aurtab directory.
