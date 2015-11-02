@@ -1,5 +1,5 @@
-#compdef aapacman aapacman.static=aapacman
-# copy this file to /usr/share/zsh/site-functions/_aapacman
+#compdef apacman apacman.static=apacman
+# copy this file to /usr/share/zsh/site-functions/_apacman
 
 typeset -A opt_args
 setopt extendedglob
@@ -279,7 +279,7 @@ _apacman_completions_all_groups() {
 # provides completions for packages available from repositories
 # these can be specified as either 'package' or 'repository/package'
 _apacman_completions_all_packages() {
-	local -a cmd packages repositories packages_long
+	local -a cmd outputlist
 	_apacman_get_command
 	outputlist=( $(command gzip -cd $HOME/.cache/aurtab/pkglist.gz) )
     typeset -U outputlist
@@ -492,50 +492,6 @@ _key_longopts=(
 	'--refresh-keys[Update specified or all keys from a keyserver]:*: :_keys'
 )
 
-_apacman_key_options=(
-	'--config[Use an alternate config file (instead of /etc/apacman.conf)]: :_files'
-	'--gpgdir[Set an alternate directory for GnuPG (instead of /etc/apacman.d/gnupg)]: :_files -/'
-	'--keyserver[Specify a keyserver to use if necessary]'
-)
-
-_apacman_key() {
-	case $words[CURRENT] in
-		--*)
-			_arguments -s : \
-				"$_apacman_key_options[@]" \
-				"$_key_longopts[@]"
-			;;
-		-*)
-			_arguments -s : \
-				"$_apacman_key_options[@]" \
-				"$_key_shortopts[@]" \
-				"$_key_longopts[@]"
-			;;
-		*)
-			i=$#;
-			while [[ $words[$i] != -* ]] && [[ $words[$i] != "apacman-key" ]];do
-				i=$(($i-1))
-			done
-			case $i in
-				--*)
-					_arguments -s : \
-						"$_apacman_key_options[@]" \
-						"$_key_longopts[@]"
-					;;
-				-*)
-					_arguments -s : \
-						"$_apacman_key_options[@]" \
-						"$_key_shortopts[@]" \
-						"$_key_longopts[@]"
-					;;
-				*)
-					return 1
-					;;
-			esac
-			;;
-	esac
-}
-
 _keys() {
 	local keylist keys
 	keylist=$(apacman-key --list-keys 2>/dev/null | awk '
@@ -559,12 +515,6 @@ _keys() {
 
 _apacman_comp() {
 	case "$service" in
-		makepkg)
-			_makepkg "$@"
-			;;
-		apacman-key)
-			_apacman_key "$@"
-			;;
 		apacman)
 			_apacman_zsh_comp "$@"
 			;;
