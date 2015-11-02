@@ -1,0 +1,577 @@
+#compdef aapacman aapacman.static=aapacman
+# copy this file to /usr/share/zsh/site-functions/_aapacman
+
+typeset -A opt_args
+setopt extendedglob
+
+# options for passing to _arguments: main apacman commands
+_apacman_opts_commands=(
+	{-D,--database}'[Modify database]'
+	{-Q,--query}'[Query the package database]'
+	{-R,--remove}'[Remove a package from the system]'
+	{-S,--sync}'[Synchronize packages]'
+	{-T,--deptest}'[Check if dependencies are installed]'
+	{-U,--upgrade}'[Upgrade a package]'
+	{-V,--version}'[Display version and exit]'
+	'-G[Download and extract AUR tarballs, do not install]'
+	'-L[List installed packages by size]'
+	'-W[View AUR comments]'
+	'(-h --help)'{-h,--help}'[Display usage]'
+)
+
+# options for passing to _arguments: options common to all commands
+_apacman_opts_common=(
+	{-b,--dbpath}'[Alternate database location]:database_location:_files -/'
+	'--color[colorize the output]:color options:(always never auto)'
+	{-h,--help}'[Display syntax for the given operation]'
+	{-r,--root}'[Set alternate installation root]:installation root:_files -/'
+	{-v,--verbose}'[Be more verbose]'
+	'--auronly[Only perform commands for AUR]'
+	'--buildonly[Build packages but do not install them then post-install remove unneeded build makedepends]'
+	'--cachedir[Alternate package cache location]:cache_location:_files -/'
+	'--config[An alternate configuration file]:config file:_files'
+	'--ignore[Ignore comma separated list of packages]'
+	'--ignorearch[Ignores architectures specified in PKGBUILD]'
+	'--keepkeys[Do not remove imported PGP keys]'
+	'--legacy[Use AUR3 instead of AUR4 (deprecated)]'
+	'--logfile[An alternate log file]:config file:_files'
+	'--noaur[Do not perform commands for the AUR]'
+	'--noconfirm[Do not ask for confirmation]'
+	'--nofail[Immediately quit if a package fails to build]'
+	'--noprogressbar[Do not show a progress bar when downloading files]'
+	'--noscriptlet[Do not execute the install scriptlet if one exists]'
+	'--nosource[Do not source PKGBUILDs, for security]'
+	'--purgebuild[Post install remove unneeded makedepends]'
+	'--preview[Always offer to edit PKGBUILD before sourcing]'
+	'--print[Only print the targets instead of performing the operation]'
+	'--progress[Terminal title transaction status]'
+	'--purgekeys[Remove trusted PGP keys]'
+	'--quiet[Turn off package descriptions]'
+	'--skipcache[Skip integrity check by ignoring AUR md5s]'
+	'--skiptest[Avoid install of check unit test packages]'
+	'--warn[Treat errors as non fatal warnings]'
+)
+
+# options for passing to _arguments: options for --upgrade commands
+_apacman_opts_pkgfile=(
+	'*-d[Skip dependency checks]'
+	'*--nodeps[Skip dependency checks]'
+	'*--assume-installed[Add virtual package to satisfy dependencies]'
+	'--dbonly[Only remove database entry, do not remove files]'
+	'--devel[Update development packages]'
+	'--force[Overwrite conflicting files]'
+	'--needed[Do not reinstall up to date packages]'
+	'--quickcheck[Check for updates and exit]'
+	'--verbose[Show enabled options]'
+	'*:package file:_files -g "*.pkg.tar*~*.sig(.,@)"'
+)
+
+# options for passing to _arguments: subactions for --query command
+_apacman_opts_query_actions=(
+	'(-Q --query)'{-Q,--query}
+	{-g,--groups}'[View all members of a package group]:*:package groups:->query_group'
+	{-o,--owns}'[Query the package that owns a file]:file:_files'
+	{-p,--file}'[Package file to query]:*:package file:->query_file'
+	{-s,--search}'[Search package names and descriptions]:*:search text:->query_search'
+)
+
+# options for passing to _arguments: options for --query and subcommands
+_apacman_opts_query_modifiers=(
+	{-c,--changelog}'[List package changelog]'
+	{-d,--deps}'[List packages installed as dependencies]'
+	{-e,--explicit}'[List packages explicitly installed]'
+	{\*-i,\*--info}'[View package information]'
+	{\*-k,\*--check}'[Check package files]'
+	{-l,--list}'[List package contents]'
+	{-m,--foreign}'[List installed packages not found in sync db(s)]'
+	{-n,--native}'[List installed packages found in sync db(s)]'
+	{-t,--unrequired}'[List packages not required by any package]'
+	{-u,--upgrades}'[List packages that can be upgraded]'
+)
+
+# options for passing to _arguments: options for --remove command
+_apacman_opts_remove=(
+	{-c,--cascade}'[Remove all dependent packages]'
+	{*-d,*--nodeps}'[Skip dependency checks]'
+	'*--assume-installed[Add virtual package to satisfy dependencies]'
+	{-n,--nosave}'[Remove protected configuration files]'
+	{\*-s,\*--recursive}'[Remove dependencies not required by other packages]'
+	'--dbonly[Only remove database entry, do not remove files]'
+	'*:installed package:_apacman_completions_installed_packages'
+)
+
+_apacman_opts_database=(
+	'--asdeps[mark packages as non-explicitly installed]'
+	'--asexplicit[mark packages as explicitly installed]'
+	'*:installed package:_apacman_completions_installed_packages'
+)
+
+# options for passing to _arguments: options for --sync command
+_apacman_opts_sync_actions=(
+	'(-S --sync)'{-S,--sync}
+	{\*-c,\*--clean}'[Remove old packages from cache]:\*:clean:->sync_clean'
+	{-g,--groups}'[View all members of a package group]:*:package groups:->sync_group'
+	{-s,--search}'[Search package names and descriptions]:*:search text:->sync_search'
+	'--cachevcs[Installs cached VCS packages newer than AUR PKGBUILDs]'
+	'--dbonly[Only remove database entry, do not remove files]'
+	'--needed[Do not reinstall up to date packages]'
+	'--recursive[Reinstall all dependencies of target packages]'
+)
+
+# options for passing to _arguments: options for --sync command
+_apacman_opts_sync_modifiers=(
+	{\*-d,\*--nodeps}'[Skip dependency checks]'
+	'*--assume-installed[Add virtual package to satisfy dependencies]'
+	{\*-i,\*--info}'[View package information]'
+	{-l,--list}'[List all packages in a repository]'
+	{-p,--print}'[Print download URIs for each package to be installed]'
+	{\*-u,\*--sysupgrade}'[Upgrade all out-of-date packages]'
+	{-w,--downloadonly}'[Download packages only]'
+	{\*-y,\*--refresh}'[Download fresh package databases]'
+	'*--ignore[Ignore a package upgrade]:package: _apacman_completions_all_packages'
+	'*--ignoregroup[Ignore a group upgrade]:package group:_apacman_completions_all_groups'
+	'--asdeps[Install packages as non-explicitly installed]'
+	'--asexplicit[Install packages as explicitly installed]'
+	'--force[Overwrite conflicting files]'
+)
+
+# handles --help subcommand
+_apacman_action_help() {
+	_arguments -s : \
+		"$_apacman_opts_commands[@]"
+}
+
+# handles cases where no subcommand has yet been given
+_apacman_action_none() {
+	_arguments -s : \
+		"$_apacman_opts_commands[@]"
+}
+
+# handles --query subcommand
+_apacman_action_query() {
+	local context state line
+	typeset -A opt_args
+
+	case $state in
+		query_file)
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_query_modifiers[@]" \
+				'*:package file:_files -g "*.pkg.tar*~*.sig(.,@)"'
+			;;
+		query_group)
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_query_modifiers[@]" \
+				'*:groups:_apacman_completions_installed_groups'
+			;;
+		query_owner)
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_query_modifiers[@]" \
+				'*:file:_files'
+			;;
+		query_search)
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_query_modifiers[@]" \
+				'*:search text: '
+			;;
+		*)
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_query_actions[@]" \
+				"$_apacman_opts_query_modifiers[@]" \
+				'*:package:_apacman_completions_installed_packages'
+			;;
+	esac
+}
+
+# handles --remove subcommand
+_apacman_action_remove() {
+	_arguments -s : \
+		'(--remove -R)'{-R,--remove} \
+		"$_apacman_opts_common[@]" \
+		"$_apacman_opts_remove[@]"
+}
+
+# handles --database subcommand
+_apacman_action_database() {
+	_arguments -s : \
+		'(--database -D)'{-D,--database} \
+		"$_apacman_opts_common[@]" \
+		"$_apacman_opts_database[@]"
+}
+
+_apacman_action_deptest () {
+	_arguments -s : \
+		'(--deptest)-T' \
+		"$_apacman_opts_common[@]" \
+		":packages:_apacman_all_packages"
+}
+
+
+# handles --sync subcommand
+_apacman_action_sync() {
+	local context state line
+	typeset -A opt_args
+	if (( $+words[(r)--clean] )); then
+		state=sync_clean
+	elif (( $+words[(r)--groups] )); then
+		state=sync_group
+	elif (( $+words[(r)--search] )); then
+		state=sync_search
+	fi
+
+	case $state in
+		sync_clean)
+			_arguments -s : \
+				{\*-c,\*--clean}'[Remove old packages from cache]' \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_sync_modifiers[@]"
+				;;
+		sync_group)
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_sync_modifiers[@]" \
+				'(-g --group)'{-g,--groups} \
+				'*:package group:_apacman_completions_all_groups'
+			;;
+		sync_search)
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_sync_modifiers[@]" \
+				'*:search text: '
+			;;
+		*)
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_sync_actions[@]" \
+				"$_apacman_opts_sync_modifiers[@]" \
+				'*:package:_apacman_completions_all_packages'
+			;;
+	esac
+}
+
+# handles --upgrade subcommand
+_apacman_action_upgrade() {
+	_arguments -s : \
+		'(-U --upgrade)'{-U,--upgrade} \
+		"$_apacman_opts_common[@]" \
+		"$_apacman_opts_pkgfile[@]"
+}
+
+# handles --version subcommand
+_apacman_action_version() {
+	# no further arguments
+	return 0
+}
+
+# provides completions for package groups
+_apacman_completions_all_groups() {
+	local -a cmd groups
+	_apacman_get_command
+	groups=( $(_call_program groups $cmd[@] -Sg) )
+	typeset -U groups
+	compadd "$@" -a groups
+}
+
+# provides completions for packages available from repositories
+# these can be specified as either 'package' or 'repository/package'
+_apacman_completions_all_packages() {
+	local -a cmd packages repositories packages_long
+	_apacman_get_command
+	outputlist=( $(command gzip -cd $HOME/.cache/aurtab/pkglist.gz) )
+    typeset -U outputlist
+    compadd "$@" -a outputlist
+}
+
+# provides completions for package groups
+_apacman_completions_installed_groups() {
+	local -a cmd groups
+	_apacman_get_command
+	groups=(${(o)${(f)"$(_call_program groups $cmd[@] -Qg)"}% *})
+	typeset -U groups
+	compadd "$@" -a groups
+}
+
+# provides completions for installed packages
+_apacman_completions_installed_packages() {
+	local -a cmd packages packages_long
+	packages_long=(/var/lib/apacman/local/*(/))
+	packages=( ${${packages_long#/var/lib/apacman/local/}%-*-*} )
+	compadd "$@" -a packages
+}
+
+_apacman_all_packages() {
+	_alternative : \
+		'localpkgs:local packages:_apacman_completions_installed_packages' \
+		'repopkgs:repository packages:_apacman_completions_all_packages'
+}
+
+# provides completions for repository names
+_apacman_completions_repositories() {
+	local -a cmd repositories
+	repositories=(${(o)${${${(M)${(f)"$(</etc/apacman.conf)"}:#\[*}/\[/}/\]/}:#options})
+	# Uniq the array
+	typeset -U repositories
+	compadd "$@" -a repositories
+}
+
+# builds command for invoking apacman in a _call_program command - extracts
+# relevant options already specified (config file, etc)
+# $cmd must be declared by calling function
+_apacman_get_command() {
+	# this is mostly nicked from _perforce
+	cmd=( "apacman" "2>/dev/null")
+	integer i
+	for (( i = 2; i < CURRENT - 1; i++ )); do
+		if [[ ${words[i]} = "--config" || ${words[i]} = "--root" ]]; then
+			cmd+=( ${words[i,i+1]} )
+		fi
+	done
+}
+
+# main dispatcher
+_apacman_zsh_comp() {
+	local -a args cmds;
+	local tmp
+	args=( ${${${(M)words:#-*}#-}:#-*} )
+	for tmp in $words; do
+		cmds+=("${${_apacman_opts_commands[(r)*$tmp\[*]%%\[*}#*\)}")
+	done
+	case $args in #$words[2] in
+		h*)
+			if (( ${(c)#args} <= 1 && ${(w)#cmds} <= 1 )); then
+				_apacman_action_help
+			else
+				_message "no more arguments"
+			fi
+			;;
+		*h*)
+			_message "no more arguments"
+			;;
+		D*)
+			_apacman_action_database
+			;;
+		Q*g*) # ipkg groups
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_query_modifiers[@]" \
+				'*:groups:_apacman_completions_installed_groups'
+			;;
+		Q*o*) # file
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_query_modifiers[@]" \
+				'*:package file:_files'
+			;;
+		Q*p*) # file *.pkg.tar*
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_query_modifiers[@]" \
+				'*:package file:_files -g "*.pkg.tar*~*.sig(.,@)"'
+			;;
+		T*)
+			_apacman_action_deptest
+			;;
+		Q*)
+			_apacman_action_query
+			;;
+		R*)
+			_apacman_action_remove
+			;;
+		S*c*) # no completion
+			_arguments -s : \
+				'(-c --clean)'{\*-c,\*--clean}'[Remove all files from the cache]' \
+				"$_apacman_opts_common[@]"
+			;;
+		S*l*) # repos
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_sync_modifiers[@]" \
+				'*:package repo:_apacman_completions_repositories' \
+			;;
+		S*g*) # pkg groups
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_sync_modifiers[@]" \
+				'*:package group:_apacman_completions_all_groups'
+			;;
+		S*s*)
+			_arguments -s : \
+				"$_apacman_opts_common[@]" \
+				"$_apacman_opts_sync_modifiers[@]" \
+				'*:search text: '
+				;;
+		S*)
+			_apacman_action_sync
+			;;
+		T*)
+			 _arguments -s : \
+				'-T' \
+				"$_apacman_opts_common[@]" \
+				":packages:_apacman_all_packages"
+			;;
+		U*)
+			_apacman_action_upgrade
+			;;
+		V*)
+			_apacman_action_version
+			;;
+		*)
+
+			case ${(M)words:#--*} in
+				*--help*)
+					if (( ${(w)#cmds} == 1 )); then
+						_apacman_action_help
+					else
+						return 0;
+					fi
+					;;
+				*--sync*)
+					_apacman_action_sync
+					;;
+				*--query*)
+					_apacman_action_query
+					;;
+				*--remove*)
+					_apacman_action_remove
+					;;
+				*--deptest*)
+					_apacman_action_deptest
+					;;
+				*--database*)
+					_apacman_action_database
+					;;
+				*--version*)
+					_apacman_action_version
+					;;
+				*--upgrade*)
+					_apacman_action_upgrade
+					;;
+				*)
+					_apacman_action_none
+					;;
+			esac
+			;;
+	esac
+}
+
+_key_shortopts=(
+	'-h[show help]'
+	'-a[Add the specified keys (empty for stdin)]: :_files'
+	'-d[Remove the Specified keyids]:*: :_keys'
+	'-e[Export the specified or all keyids]:*: :_keys'
+	'-f[List fingreprint for specidied or all keyids]:*: :_keys'
+	'-l[List the specified or all keys]:*: :_keys'
+	'-r[Fetch the specified keyids]:*: :_keys'
+	'-u[Update the trustdb of apacman]'
+	'-v[Verify the file specified by the signature]: :_files -g "*.sig"'
+	'-V[Show program version]'
+)
+
+_key_longopts=(
+	'--help[show help]'
+	'--add[Add the specified keys (empty for stdin)]: :_files'
+	'--delete[Remove the Specified keyids]:*: :_keys'
+	'--export[Export the specified or all keyids]:*: :_keys'
+	'--finger[List fingreprint for specidied or all keyids]:*: :_keys'
+	'--list-keys[List the specified or all keys]:*: :_keys'
+	'--recv-keys[Fetch the specified keyids]:*: :_keys'
+	'--updatedb[Update the trustdb of apacman]'
+	'--verify[Verify the file specified by the signature]: :_files -g "*.sig"'
+	'--version[Show program version]'
+	'--edit-key[Present a menu for key management task on keyids]:*: :_keys'
+	'--import[Imports pubring.gpg from dir(s)]: :_files -g "*.gpg"'
+	'--import-tb[Imports ownertrust values from trustdb.gpg in dir(s)]: :_files -g "*.gpg"'
+	'--init[Ensure the keyring is properly initialized]'
+	'--list-sigs[List keys and their signatures]:*: :_keys'
+	'--lsign-key[Locally sign the specified keyid]:*: :_keys'
+	'--populate[Reload the default keys from the (given) keyrings in '/usr/share/apacman/keyrings']: :_path_files -W /usr/share/apacman/keyrings'
+	'--refresh-keys[Update specified or all keys from a keyserver]:*: :_keys'
+)
+
+_apacman_key_options=(
+	'--config[Use an alternate config file (instead of /etc/apacman.conf)]: :_files'
+	'--gpgdir[Set an alternate directory for GnuPG (instead of /etc/apacman.d/gnupg)]: :_files -/'
+	'--keyserver[Specify a keyserver to use if necessary]'
+)
+
+_apacman_key() {
+	case $words[CURRENT] in
+		--*)
+			_arguments -s : \
+				"$_apacman_key_options[@]" \
+				"$_key_longopts[@]"
+			;;
+		-*)
+			_arguments -s : \
+				"$_apacman_key_options[@]" \
+				"$_key_shortopts[@]" \
+				"$_key_longopts[@]"
+			;;
+		*)
+			i=$#;
+			while [[ $words[$i] != -* ]] && [[ $words[$i] != "apacman-key" ]];do
+				i=$(($i-1))
+			done
+			case $i in
+				--*)
+					_arguments -s : \
+						"$_apacman_key_options[@]" \
+						"$_key_longopts[@]"
+					;;
+				-*)
+					_arguments -s : \
+						"$_apacman_key_options[@]" \
+						"$_key_shortopts[@]" \
+						"$_key_longopts[@]"
+					;;
+				*)
+					return 1
+					;;
+			esac
+			;;
+	esac
+}
+
+_keys() {
+	local keylist keys
+	keylist=$(apacman-key --list-keys 2>/dev/null | awk '
+		$1 == "pub" {
+			# key id
+			split($2, a, "/"); print a[2]
+		}
+		$1 == "uid" {
+			# email
+			if (match($NF, /<[^>]+>/))
+				print substr($NF, RSTART + 1, RLENGTH - 2)
+		#this adds support for names as well if that is ever added
+			}
+		$1 == "uid" {
+		for (i=2;i<NF;i++) {printf "%s%s",sep, $i;sep=" "}; printf "\n"
+		}' |sed -e 's/(.*)//g' -e 's/^\ //g' -e 's/\ *$//g' |uniq
+		)
+		keys=(${(s:/:)${keylist//$'\n'/\/}})
+	_describe -t modules 'keys in keyring' keys && return 0
+}
+
+_apacman_comp() {
+	case "$service" in
+		makepkg)
+			_makepkg "$@"
+			;;
+		apacman-key)
+			_apacman_key "$@"
+			;;
+		apacman)
+			_apacman_zsh_comp "$@"
+			;;
+		*)
+			_message "Error"
+			;;
+	esac
+}
+
+_apacman_comp "$@"
