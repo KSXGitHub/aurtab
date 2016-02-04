@@ -1,0 +1,106 @@
+# vim: set ft=sh ts=2 sw=2 et:
+# file: /etc/bash_completion.d/yaourt
+
+# Bash completion for yaourt
+# Use pacman completion (_pacman())
+#
+# This file is in the public domain.
+#
+
+
+## yaourt completion
+
+_yaourt_pkg() {
+  _arch_compgen "$(
+    if [[ $2 ]]; then
+     \gzip -cd $HOME/.cache/aurtab/pkglist.gz | head -20
+    else
+     \gzip -cd $HOME/.cache/aurtab/pkglist.gz | head -20
+    fi
+  )"
+}
+
+_local_pacman() {
+  local common core cur database prev query remove sync upgrade o
+  COMPREPLY=()
+  _get_comp_words_by_ref cur prev
+  database=('asdeps asexplicit')
+  query=('changelog check deps explicit file foreign groups info list owns
+          search unrequired upgrades' 'c e g i k l m o p s t u')
+  remove=('cascade dbonly nodeps assume-installed nosave print recursive unneeded' 'c n p s u')
+  sync=('asdeps asexplicit clean dbonly downloadonly force groups ignore ignoregroup
+         info list needed nodeps assume-installed print refresh recursive search sysupgrade'
+        'c g i l p s u w y')
+  upgrade=('asdeps asexplicit force needed nodeps assume-installed print recursive' 'p')
+  common=('arch cachedir color config dbpath debug help logfile noconfirm
+           noprogressbar noscriptlet quiet root verbose' 'b d h q r v')
+  core=('database help query remove sync upgrade version' 'D Q R S U V h')
+
+  for o in 'D database' 'Q query' 'R remove' 'S sync' 'U upgrade'; do
+    _arch_incomp "$o" && break
+  done
+
+  if [[ $? != 0 ]]; then
+    _arch_ptr2comp core
+  elif [[ ! $prev =~ ^-\w*[Vbhr] &&
+    ! $prev = --@(cachedir|color|config|dbpath|help|logfile|root|version) ]]
+  then
+    [[ $cur = -* ]] && _arch_ptr2comp ${o#* } common ||
+      case ${o% *} in
+      D|R)
+          _pacman_pkg Qq;;
+      Q)
+        { _arch_incomp 'g groups' && _pacman_pkg Qg sort; }    ||
+        { _arch_incomp 'p file'   && _pacman_file; }           ||
+          _arch_incomp 'o owns'   || _arch_incomp 'u upgrades' ||
+          _pacman_pkg Qq;;
+      S)
+        { _arch_incomp 'g groups' && _pacman_pkg Sg; }      ||
+        { _arch_incomp 'l list'   && _pacman_pkg Sl sort; } ||
+          _yaourt_pkg;;
+      U)
+          _pacman_file;;
+      esac
+  fi
+  true
+}
+
+_yaourt_backup_file() {
+  compopt -o filenames; _filedir 'tar.*'
+}
+
+_yaourt ()
+{
+  local op cur o
+  COMPREPLY=()
+  cur=$(_get_cword)
+  if ((COMP_CWORD == 1)); then
+    if [[ $cur != -* ]]; then
+      _yaourt_pkg; return 0;
+    else
+      _local_pacman &> /dev/null
+      _arch_compgen "${COMPREPLY[@]}" "-B --backup -C -G --getpkgbuild --stats"
+      return 0
+    fi
+  fi
+  for o in 'D database' 'Q query' 'R remove' 'S sync' 'U upgrade' 'B backup' 'C' 'G getpkgbuild'; do
+    _arch_incomp "$o" && break
+  done
+  (($?)) && op="" || op="${o% *}"
+  _arch_incomp 'backupfile' || [[ $op == "B" ]] || _local_pacman &> /dev/null
+  if [[ "$cur" == -* ]]; then
+    case "$op" in
+      C) _arch_compgen "-c --clean";;
+      Q) _arch_compgen  "${COMPREPLY[@]}" "--backupfile --date";;
+      S) _arch_compgen  "${COMPREPLY[@]}" "-b --build -a --aur --devel --holdver";;
+    esac
+  else
+    case "$op" in
+      Q) _arch_incomp 'backupfile' && _yaourt_backup_file;;
+      B) _yaourt_backup_file;;
+      G) _yaourt_pkg;; 
+    esac
+  fi
+}
+_completion_loader pacman
+complete -o default -F _yaourt yaourt
